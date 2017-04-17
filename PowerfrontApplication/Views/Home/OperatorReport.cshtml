@@ -1,0 +1,119 @@
+﻿@{
+    ViewBag.Title = "Operator Report";
+}
+
+<h2>Operator Report</h2>
+
+<div class="form">
+    <div class="form-group">
+        <label for="radioFilter">Data Filter</label>
+        <label class="radio-inline">
+            <input type="radio" name="rdbFilter" id="rdbPreDefined" value="predefined" class="control" checked /> Pre-Defined
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="rdbFilter" id="rdbCustom" value="custom" class="control" /> Custom
+        </label>
+    </div>
+    <div class="form-group" id="divPreDefine">
+        <label for="ddlPreDefined">Pre Defined</label>
+        <select id="ddlPreDefined" name="ddlPreDefined" class="form-control ">
+            <option value="Today">Today</option>
+            <option value="Yesterday">Yesterday</option>
+            <option value="CurrentWeek">This Week</option>
+            <option value="LastWeek">Last Week</option>
+            <option value="CurrentMonth">This Month</option>
+            <option value="LastMonth">Last Month</option>
+            <option value="CurrentYear">This year</option>
+            <option value="LastYear">Last Year</option>
+        </select>
+    </div>
+    <div class="form-group" style="display:none;" id="divCustom">
+        <label for="ddlCustom">Custom</label>
+        <div class="form-inline">
+            <div class="form-group">
+                @Html.TextBox("fromDate", "", new { @placeholder = "From Date", @type = "date", @class = "form-control" })
+            </div>
+            <div class="form-group">
+                @Html.TextBox("toDate", "", new { @placeholder = "To Date", @type = "date", @class = "form-control" })
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="websitesOptions">Website</label>
+        @Html.DropDownList("ddlWebsite", (SelectList)ViewBag.seletedListWebsites, "Select Website", new { @class = "form-control" })
+    </div>
+    <div class="form-group">
+        <label for="devicesOptions">Device</label>
+        @Html.DropDownList("ddlDevice", (SelectList)ViewBag.seletedListDevices, "Select Device", new { @class = "form-control" })
+    </div>
+    <button type="button" class="btn btn-default" id="btnSubmit">Send invitation</button>
+    <div class="clearfix"></div>
+</div>
+<br/>
+
+<div id="tblReport">
+    <div class="row">
+            <div class="col-sm-1"><b>S.No.</b></div>
+            <div class="col-sm-1"><b>Operator Name</b></div>
+            <div class="col-sm-1"><b>Proactive Sent</b></div>
+            <div class="col-sm-1"><b>Proactive Answered</b></div>
+            <div class="col-sm-2"><b>Proactive Response Rate</b></div>
+            <div class="col-sm-1"><b>Reactive Received</b></div>
+            <div class="col-sm-1"><b>Reactive Answered</b></div>
+            <div class="col-sm-2"><b>Reactive Response Rate</b></div>
+            <div class="col-sm-1"><b>Total Chat Length</b></div>
+            <div class="col-sm-1"><b>Average Chat Length</b></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(function () {
+            $("[name=rdbFilter]").change(function (obj) {
+                if ($(this).val() == "predefined") {
+                    $("#divPreDefine").show();
+                    $("#divCustom").hide();
+                }
+                else {
+                    $("#divPreDefine").hide();
+                    $("#divCustom").show();
+                }
+            })
+            $("[type=date]").datepicker().attr('type', 'text');
+            $("#btnSubmit").click(function (evt) {
+                var data = {};
+                if ($("[name=rdbFilter]").val() == "predefined") {
+                    data.preDefinedDate = $("#ddlPreDefined").val();
+                } else {
+                    data.fromDate = $("#fromDate").val();
+                    data.toDate = $("#toDate").val();
+                }
+                data.website = $("#ddlWebsite").val();
+                data.device = $("#ddlDevice").val();
+
+                $.ajax("/Home/GetOperationResult", {
+                    type: "POST",
+                    data: JSON.stringify({ "dataFilters" : data }),
+                    dataType: "json",
+                    contentType: "application/json",
+                    success: function (data) {
+                        console.log(data);
+                        if (data.length > 0)
+                        {
+                            var str = "";
+                            $.each(data, function (i, v) {
+                                str += "<div class='row'><div class='col-sm-1'>" + v.ID + "</div><div class='col-sm-1'>" + v.Name + "</div><div class='col-sm-1'> " + v.ProactiveSent + "</div><div class='col-sm-1'> " + v.ProactiveAnswered + "</div><div class='col-sm-2'> " + ((v.ProactiveResponseRate > 0) ? (v.ProactiveResponseRate + "%") : "-") + "</div><div class='col-sm-1'> " + v.ReactiveReceived + "</div><div class='col-sm-1'> " + v.ReactiveAnswered + "</div><div class='col-sm-2'> " + ((v.ReactiveResponseRate > 0) ? (v.ReactiveResponseRate + "%") : "-") + "</div><div class='col-sm-1'> " + v.TotalChatLength + "</div><div class='col-sm-1'> " + v.AverageChatLength + "</div></div>";
+                            });
+                            var tbl = $("#tblReport").append(str);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                });
+            });
+        });
+    </script>
+
+}
+
