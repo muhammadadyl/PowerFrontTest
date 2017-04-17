@@ -3,7 +3,7 @@
 }
 
 <h2>Operator Report</h2>
-
+<span class="alert-danger" style="display:none;" id="errorHead"></span>
 <div class="form">
     <div class="form-group">
         <label for="radioFilter">Data Filter</label>
@@ -31,10 +31,10 @@
         <label for="ddlCustom">Custom</label>
         <div class="form-inline">
             <div class="form-group">
-                @Html.TextBox("fromDate", "", new { @placeholder = "From Date", @type = "date", @class = "form-control" })
+                @Html.TextBox("fromDate", "", new { @placeholder = "From Date", @type = "date", @class = "form-control", @id = "fromDate" })
             </div>
             <div class="form-group">
-                @Html.TextBox("toDate", "", new { @placeholder = "To Date", @type = "date", @class = "form-control" })
+                @Html.TextBox("toDate", "", new { @placeholder = "To Date", @type = "date", @class = "form-control", @id = "toDate" })
             </div>
         </div>
     </div>
@@ -46,29 +46,34 @@
         <label for="devicesOptions">Device</label>
         @Html.DropDownList("ddlDevice", (SelectList)ViewBag.seletedListDevices, "Select Device", new { @class = "form-control" })
     </div>
-    <button type="button" class="btn btn-default" id="btnSubmit">Send invitation</button>
+    <button type="button" class="btn btn-default" id="btnSubmit">Show Results</button>
+    <button type="button" class="btn btn-default" id="btnExcel">Import To Excel</button>
     <div class="clearfix"></div>
 </div>
-<br/>
+<br />
 
-<div id="tblReport">
+<div>
     <div class="row">
-            <div class="col-sm-1"><b>S.No.</b></div>
-            <div class="col-sm-1"><b>Operator Name</b></div>
-            <div class="col-sm-1"><b>Proactive Sent</b></div>
-            <div class="col-sm-1"><b>Proactive Answered</b></div>
-            <div class="col-sm-2"><b>Proactive Response Rate</b></div>
-            <div class="col-sm-1"><b>Reactive Received</b></div>
-            <div class="col-sm-1"><b>Reactive Answered</b></div>
-            <div class="col-sm-2"><b>Reactive Response Rate</b></div>
-            <div class="col-sm-1"><b>Total Chat Length</b></div>
-            <div class="col-sm-1"><b>Average Chat Length</b></div>
+        <div class="col-sm-1"><b>S.No.</b></div>
+        <div class="col-sm-1"><b>Operator Name</b></div>
+        <div class="col-sm-1"><b>Proactive Sent</b></div>
+        <div class="col-sm-1"><b>Proactive Answered</b></div>
+        <div class="col-sm-2"><b>Proactive Response Rate</b></div>
+        <div class="col-sm-1"><b>Reactive Received</b></div>
+        <div class="col-sm-1"><b>Reactive Answered</b></div>
+        <div class="col-sm-2"><b>Reactive Response Rate</b></div>
+        <div class="col-sm-1"><b>Total Chat Length</b></div>
+        <div class="col-sm-1"><b>Average Chat Length</b></div>
+    </div>
+    <div id="tblReport">
+
     </div>
 </div>
 
 @section Scripts {
     <script type="text/javascript">
         $(function () {
+            var msgbar = $("#errorHead");
             $("[name=rdbFilter]").change(function (obj) {
                 if ($(this).val() == "predefined") {
                     $("#divPreDefine").show();
@@ -81,8 +86,9 @@
             })
             $("[type=date]").datepicker().attr('type', 'text');
             $("#btnSubmit").click(function (evt) {
+                msgbar.hide();
                 var data = {};
-                if ($("[name=rdbFilter]").val() == "predefined") {
+                if ($("[name=rdbFilter]:checked").val() == "predefined") {
                     data.preDefinedDate = $("#ddlPreDefined").val();
                 } else {
                     data.fromDate = $("#fromDate").val();
@@ -93,22 +99,55 @@
 
                 $.ajax("/Home/GetOperationResult", {
                     type: "POST",
-                    data: JSON.stringify({ "dataFilters" : data }),
+                    data: JSON.stringify({ "dataFilters": data }),
                     dataType: "json",
                     contentType: "application/json",
                     success: function (data) {
                         console.log(data);
-                        if (data.length > 0)
-                        {
+                        if (data.length > 0) {
                             var str = "";
                             $.each(data, function (i, v) {
-                                str += "<div class='row'><div class='col-sm-1'>" + v.ID + "</div><div class='col-sm-1'>" + v.Name + "</div><div class='col-sm-1'> " + v.ProactiveSent + "</div><div class='col-sm-1'> " + v.ProactiveAnswered + "</div><div class='col-sm-2'> " + ((v.ProactiveResponseRate > 0) ? (v.ProactiveResponseRate + "%") : "-") + "</div><div class='col-sm-1'> " + v.ReactiveReceived + "</div><div class='col-sm-1'> " + v.ReactiveAnswered + "</div><div class='col-sm-2'> " + ((v.ReactiveResponseRate > 0) ? (v.ReactiveResponseRate + "%") : "-") + "</div><div class='col-sm-1'> " + v.TotalChatLength + "</div><div class='col-sm-1'> " + v.AverageChatLength + "</div></div>";
+                                str += "<div class='row'><div class='col-sm-1'>" + v.ID + "</div><div class='col-sm-1'>" + v.Name + "</div><div class='col-sm-1'> " + v.ProactiveSent + "</div><div class='col-sm-1'> " + v.ProactiveAnswered + "</div><div class='col-sm-2'> " + ((v.ProactiveResponseRate > -1) ? (v.ProactiveResponseRate + "%") : "-") + "</div><div class='col-sm-1'> " + v.ReactiveReceived + "</div><div class='col-sm-1'> " + v.ReactiveAnswered + "</div><div class='col-sm-2'> " + ((v.ReactiveResponseRate > -1) ? (v.ReactiveResponseRate + "%") : "-") + "</div><div class='col-sm-1'> " + v.TotalChatLength + "</div><div class='col-sm-1'> " + v.AverageChatLength + "</div></div>";
                             });
-                            var tbl = $("#tblReport").append(str);
+                            var tbl = $("#tblReport");
+                            tbl.empty();
+                            tbl.append(str);
                         }
                     },
                     error: function (e) {
+                        msgbar.html("Some thing went wrong " + e.statusText);
+                        msgbar.show();
+                    }
+                });
+            });
+            $("#btnExcel").click(function (evt) {
+                msgbar.hide();
+                var data = {};
+                if ($("[name=rdbFilter]:checked").val() == "predefined") {
+                    data.preDefinedDate = $("#ddlPreDefined").val();
+                } else {
+                    data.fromDate = $("#fromDate").val();
+                    data.toDate = $("#toDate").val();
+                }
+                data.website = $("#ddlWebsite").val();
+                data.device = $("#ddlDevice").val();
 
+                $.ajax("/Home/GetDataOnExcel", {
+                    type: "POST",
+                    data: JSON.stringify({ "dataFilters": data }),
+                    dataType: "json",
+                    contentType: "application/json",
+                    success: function (data) {
+                        console.log(data);
+                        if (data.path.length > 0) {
+                            var link = document.createElement('a');
+                            link.href = data.path;
+                            link.click();
+                        }
+                    },
+                    error: function (e) {
+                        msgbar.html("Some thing went wrong " + e.statusText);
+                        msgbar.show();
                     }
                 });
             });
