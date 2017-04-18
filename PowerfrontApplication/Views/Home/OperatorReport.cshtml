@@ -52,7 +52,7 @@
 </div>
 <br />
 
-<div>
+<div id="dataDiv" style="display:none">
     <div class="row">
         <div class="col-sm-1"><b>S.No.</b></div>
         <div class="col-sm-1"><b>Operator Name</b></div>
@@ -105,6 +105,7 @@
                     success: function (data) {
                         console.log(data);
                         if (data.length > 0) {
+                            $("#dataDiv").show();
                             var str = "";
                             $.each(data, function (i, v) {
                                 str += "<div class='row'><div class='col-sm-1'>" + v.ID + "</div><div class='col-sm-1'>" + v.Name + "</div><div class='col-sm-1'> " + v.ProactiveSent + "</div><div class='col-sm-1'> " + v.ProactiveAnswered + "</div><div class='col-sm-2'> " + ((v.ProactiveResponseRate > -1) ? (v.ProactiveResponseRate + "%") : "-") + "</div><div class='col-sm-1'> " + v.ReactiveReceived + "</div><div class='col-sm-1'> " + v.ReactiveAnswered + "</div><div class='col-sm-2'> " + ((v.ReactiveResponseRate > -1) ? (v.ReactiveResponseRate + "%") : "-") + "</div><div class='col-sm-1'> " + v.TotalChatLength + "</div><div class='col-sm-1'> " + v.AverageChatLength + "</div></div>";
